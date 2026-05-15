@@ -15,7 +15,19 @@ import platform
 from datetime import datetime, timezone
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from hash_engine import calculate_sha256
+try:
+    from hash_engine import calculate_sha256
+except ImportError:
+    import hashlib
+
+    def calculate_sha256(path):
+        """Fallback SHA-256 calculator if hash_engine.py is missing on Render."""
+        sha256 = hashlib.sha256()
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(8192), b''):
+                sha256.update(chunk)
+        return sha256.hexdigest()
+
 import shutil
 
 # ── Conditional Unix-only imports ─────────────────────────────────────────────
@@ -90,18 +102,41 @@ RISK_MAP_WINDOWS = {
     r'C:\Windows\SysWOW64':                 'low',
 }
 
+RISK_MAP_LINUX = {
+    TEST_ATTACK_FILE: 'critical',
+    '/etc/passwd': 'critical',
+    '/etc/shadow': 'critical',
+    '/etc/sudoers': 'critical',
+    '/etc/ssh': 'high',
+    '/etc/hosts': 'medium',
+}
+
+RISK_MAP_MACOS = {
+    TEST_ATTACK_FILE: 'critical',
+    '/etc/passwd': 'critical',
+    '/etc/sudoers': 'critical',
+    '/etc/ssh': 'high',
+    '/etc/hosts': 'medium',
+}
+
 def get_risk_map():
     if OS_NAME == 'Windows':
         return RISK_MAP_WINDOWS
-    
+    if OS_NAME == 'Linux':
+        return RISK_MAP_LINUX
+    if OS_NAME == 'Darwin':
+        return RISK_MAP_MACOS
+    return {TEST_ATTACK_FILE: 'critical'}
 
-RISK_MAP = get_risk_map()
+
+RISK_MAP = get_risk_map() or {TEST_ATTACK_FILE: 'critical'}
 
 def classify_risk(path):
-    # Normalize separators for comparison on Windows
-    norm = path.replace('/', os.sep)
+    """Return risk level safely on every OS. Never crash the API."""
+    norm = os.path.abspath(path) if path == TEST_ATTACK_FILE else path.replace('\\', os.sep)
     for prefix, level in RISK_MAP.items():
-        if norm.startswith(prefix):
+        prefix_norm = os.path.abspath(prefix) if prefix == TEST_ATTACK_FILE else prefix.replace('\\', os.sep)
+        if norm.startswith(prefix_norm):
             return level
     return 'low'
 
@@ -347,26 +382,39 @@ def api_incident_report():
 
 @app.route('/api/baseline', methods=['GET', 'POST'])
 def api_generate_baseline():
-    """Hash every monitored file and store as the baseline."""
-    ensure_demo_file_exists()
-    timestamp = now_utc()
-    entries = []
-    for path in MONITORED_FILES:
-        digest = hash_file(path)
-        size, perms, owner = get_file_meta(path)
-        entries.append({
-            'path':      path,
-            'hash':      digest,
-            'size':      size,
-            'perms':     perms,
-            'owner':     owner,
-            'risk':      classify_risk(path),
-            'timestamp': timestamp,
-        })
+    """Hash every monitored file and store as the baseline without crashing on Render/Linux."""
+    try:
+        ensure_demo_file_exists()
+        timestamp = now_utc()
+        entries = []
 
-    baseline = {'timestamp': timestamp, 'platform': OS_NAME, 'files': entries}
-    save_baseline(baseline)
-    return jsonify({'ok': True, 'timestamp': timestamp, 'files': entries})
+        for path in MONITORED_FILES:
+            try:
+                digest = hash_file(path)
+                size, perms, owner = get_file_meta(path)
+                risk = classify_risk(path)
+            except Exception as e:
+                # One bad/missing/protected file should not break the whole baseline request.
+                digest = f'ERROR: {str(e)}'
+                size, perms, owner = 'N/A', 'N/A', 'N/A'
+                risk = 'low'
+
+            entries.append({
+                'path':      path,
+                'hash':      digest,
+                'size':      size,
+                'perms':     perms,
+                'owner':     owner,
+                'risk':      risk,
+                'timestamp': timestamp,
+            })
+
+        baseline = {'timestamp': timestamp, 'platform': OS_NAME, 'files': entries}
+        save_baseline(baseline)
+        return jsonify({'ok': True, 'timestamp': timestamp, 'files': entries}), 200
+
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 
 @app.route('/api/scan', methods=['GET'])
@@ -531,5 +579,5 @@ if __name__ == '__main__':
     if IS_WINDOWS:
         print("\nWindows note: install pywin32 for file owner resolution.")
         print("  pip install pywin32")
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
 
