@@ -214,21 +214,26 @@ function renderTable() {
 }
 
 function updateStats() {
-  const ok     = FILES.filter(f => f.status === 'ok').length;
+  const ok = FILES.filter(f => f.status === 'ok').length;
   const alerts = FILES.filter(f => f.status !== 'ok').length;
 
-  document.getElementById('st-total').textContent   = FILES.length;
-  document.getElementById('st-ok').textContent      = ok;
-  document.getElementById('st-alerts').textContent  = alerts;
+  document.getElementById('st-total').textContent = FILES.length;
+  document.getElementById('st-ok').textContent = ok;
+  document.getElementById('st-alerts').textContent = alerts;
   document.getElementById('alert-count').textContent = ` ${alerts} files `;
 
   const banner = document.getElementById('alert-banner');
   alerts > 0 ? banner.classList.add('show') : banner.classList.remove('show');
 
-  const criticalAlerts = FILES.filter(f => f.status !== 'ok' && f.risk === 'critical').length;
-  if (criticalAlerts > 0) activateQuarantine(criticalAlerts);
-}
+  // Quarantine only when a critical file is MODIFIED
+  const criticalModified = FILES.filter(
+    f => f.status === 'modified' && f.risk === 'critical'
+  ).length;
 
+  if (criticalModified > 0) {
+    activateQuarantine(criticalModified);
+  }
+}
 function activateQuarantine(count) {
   quarantineActive = true;
   document.body.classList.add('quarantine-active');
