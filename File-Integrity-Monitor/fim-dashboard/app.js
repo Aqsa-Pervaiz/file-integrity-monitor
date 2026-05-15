@@ -4,6 +4,7 @@
  */
 
 const API_BASE = "https://fim-backend-67ex.onrender.com";
+const API = API_BASE;
 const DEMO_USER = 'admin';
 const DEMO_PASS = 'admin123';
 let quarantineActive = false;
