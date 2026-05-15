@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Integrity Monitor (FIM) Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Login Screen ───────────────────────────────────────────────────────── -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-orb"></div>
+    <div class="login-kicker">Secure Access Console</div>
+    <h1>FIM SOC Terminal</h1>
+    <p>Authenticate to access file integrity monitoring, quarantine mode, and live incident simulation.</p>
+    <div class="login-field">
+      <label>Username</label>
+      <input id="login-user" type="text" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input id="login-pass" type="password" placeholder="admin123" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="btn btn-scan login-btn" onclick="login()">Enter Dashboard</button>
+    <div class="login-hint">Demo credentials: <b>admin</b> / <b>admin123</b></div>
+  </div>
+</div>
+
+<div class="fim-root locked" id="fim-root">
+
+  <!-- ── Top Bar ──────────────────────────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo-dot"></div>
+      <span class="logo-text">File Integrity Monitor</span>
+      <span class="logo-sub">SOC Terminal · SHA-256 · Quarantine Engine</span>
+    </div>
+    <div class="topbar-right">
+      <span class="ts-label" id="last-scan-label">Last scan: —</span>
+      <button class="btn" onclick="logout()">⎋ Logout</button>
+      <button class="btn" id="baseline-btn" onclick="openBaselineModal()">⊕ Generate Baseline</button>
+      <button class="btn btn-danger" id="attack-btn" onclick="simulateAttack()">⚠ Simulate Attack</button>
+      <button class="btn btn-scan" id="scan-btn" onclick="startScan()">▶ Run Scan</button>
+      <button class="btn" onclick="generateIncidentReport()">📄 Incident Report</button>
+    </div>
+  </div>
+
+  <!-- ── Stats Bar ────────────────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Total Monitored</div>
+      <div class="stat-val blue" id="st-total">—</div>
+      <div class="stat-sub">system files</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Intact</div>
+      <div class="stat-val green" id="st-ok">—</div>
+      <div class="stat-sub">hash match verified</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Alerts</div>
+      <div class="stat-val red" id="st-alerts">—</div>
+      <div class="stat-sub">action required</div>
+    </div>
+    <div class="stat-card quarantine-stat">
+      <div class="stat-label">Quarantine Mode</div>
+      <div class="stat-val amber" id="st-quarantine" style="font-size:14px;line-height:2">Standby</div>
+      <div class="stat-sub">critical-response status</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Baseline Timestamp</div>
+      <div class="stat-val amber" id="st-base" style="font-size:14px;line-height:2">Not set</div>
+      <div class="stat-sub">UTC</div>
+    </div>
+  </div>
+
+  <!-- ── Main ─────────────────────────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Monitored Paths</div>
+        <div class="sidebar-item active" onclick="filterPath('all',this)">
+          <div class="si-dot" style="background:#58a6ff"></div>All files
+          <span class="si-count" id="cnt-all">—</span>
+        </div>
+        <div class="sidebar-item" onclick="filterPath('C:\\Windows\\System32\\drivers\\etc\\hosts',this)">
+          <div class="si-dot" style="background:#bc8cff"></div>hosts
+          <span class="si-count" id="cnt-hosts">—</span>
+        </div>
+        <div class="sidebar-item" onclick="filterPath('C:\\Windows\\System32\\config',this)">
+          <div class="si-dot" style="background:#f85149"></div>System32 config
+          <span class="si-count" id="cnt-config">—</span>
+        </div>
+        <div class="sidebar-item" onclick="filterPath('C:\\Windows\\System32',this)">
+          <div class="si-dot" style="background:#d29922"></div>System32
+          <span class="si-count" id="cnt-system32">—</span>
+        </div>
+        <div class="sidebar-item" onclick="filterPath('C:\\Windows\\SysWOW64',this)">
+          <div class="si-dot" style="background:#58a6ff"></div>SysWOW64
+          <span class="si-count" id="cnt-syswow64">—</span>
+        </div>
+        <div class="sidebar-item" onclick="filterPath('C:\\Windows\\explorer.exe',this)">
+          <div class="si-dot" style="background:#3fb950"></div>explorer.exe
+          <span class="si-count" id="cnt-explorer">—</span>
+        </div>
+        <div class="sidebar-item" onclick="filterPath('C:\\Windows\\System32\\cmd.exe',this)">
+          <div class="si-dot" style="background:#8b949e"></div>cmd.exe
+          <span class="si-count" id="cnt-cmd">—</span>
+        </div>
+        <div class="sidebar-item" onclick="filterPath('C:\\Windows\\System32\\powershell.exe',this)">
+          <div class="si-dot" style="background:#bc8cff"></div>powershell.exe
+          <span class="si-count" id="cnt-powershell">—</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Filter by Status</div>
+        <div class="sidebar-item" onclick="filterStatus('all',this)">
+          <div class="si-dot" style="background:#8b949e"></div>All statuses
+        </div>
+        <div class="sidebar-item" onclick="filterStatus('modified',this)">
+          <div class="si-dot" style="background:#f85149"></div>Modified
+        </div>
+        <div class="sidebar-item" onclick="filterStatus('missing',this)">
+          <div class="si-dot" style="background:#d29922"></div>Missing
+        </div>
+        <div class="sidebar-item" onclick="filterStatus('ok',this)">
+          <div class="si-dot" style="background:#3fb950"></div>Intact
+        </div>
+        <div class="sidebar-item" onclick="filterStatus('new',this)">
+          <div class="si-dot" style="background:#58a6ff"></div>Unverified
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">About</div>
+        <div class="sidebar-about">
+          FIM compares real SHA-256 hashes of critical system files against a stored baseline. Any deviation triggers an alert.
+        </div>
+        <div style="padding:4px 16px 6px;font-size:10px;color:var(--fim-muted)">
+          Backend: <span style="color:var(--fim-blue)" id="api-status-dot">connecting…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="content-header">
+        <span class="content-title">File Integrity Records</span>
+        <div class="filter-row">
+          <input class="search-box" type="text" placeholder="search path…" oninput="searchFiles(this.value)">
+          <select class="filter-select" onchange="sortFiles(this.value)">
+            <option value="status">Sort: Status</option>
+            <option value="path">Sort: Path A→Z</option>
+            <option value="risk">Sort: Risk</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="no-baseline-banner" id="no-baseline-banner">
+        ℹ &nbsp;No baseline found — click <strong>&nbsp;⊕ Generate Baseline&nbsp;</strong> to hash files and start monitoring.
+      </div>
+
+      <div class="quarantine-banner" id="quarantine-banner">
+        🚨 <strong>QUARANTINE MODE ACTIVE</strong> — critical file integrity breach detected. Review details before refreshing baseline.
+        <button class="btn btn-danger-mini" onclick="releaseQuarantine()">Release</button>
+      </div>
+
+      <div class="terminal-console">
+        <div class="terminal-title">SOC LIVE TERMINAL <span id="terminal-status">● listening</span></div>
+        <div class="terminal-lines" id="terminal-lines">
+          <div>[BOOT] FIM console initialized</div>
+          <div>[READY] Waiting for baseline or scan activity...</div>
+        </div>
+      </div>
+
+      <div class="alert-banner" id="alert-banner">
+        ⚠ &nbsp;Integrity violations detected —
+        <strong id="alert-count">&nbsp;0 files&nbsp;</strong> require immediate review
+      </div>
+
+      <div class="table-scroll">
+        <table class="file-table">
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>Status</th>
+              <th>Baseline SHA-256</th>
+              <th>Current SHA-256</th>
+              <th>Last Checked</th>
+              <th>Risk</th>
+            </tr>
+          </thead>
+          <tbody id="file-tbody">
+            <tr class="empty-row">
+              <td colspan="6">Run a scan to load real file data from the backend.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detail Panel -->
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-inner">
+          <div class="detail-title" id="detail-title">—</div>
+          <div class="detail-grid"  id="detail-grid"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.main -->
+
+  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
+  <div class="footer">
+    <span>FIM · SHA-256 integrity engine · <span id="api-url">http://127.0.0.1:5000</span></span>
+    <span id="footer-time"></span>
+  </div>
+
+</div><!-- /.fim-root -->
+
+<!-- ── Scan Overlay ────────────────────────────────────────────────────────── -->
+<div class="scan-overlay" id="scan-overlay">
+  <div class="scan-box">
+    <div class="scan-title">
+      <div class="scan-spinner" id="scan-spinner"></div>
+      Live Scan
+    </div>
+    <div class="scan-log" id="scan-log"></div>
+    <div class="scan-progress">
+      <div class="scan-progress-bar" id="scan-bar"></div>
+    </div>
+    <div class="scan-status" id="scan-status">Connecting to backend…</div>
+    <div class="scan-footer">
+      <span class="scan-result" id="scan-result"></span>
+      <button class="btn" id="scan-close" style="display:none" onclick="closeScan()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Baseline Modal ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="baseline-modal">
+  <div class="modal-box">
+    <div class="modal-title">Generate Baseline</div>
+    <div class="modal-sub">
+      This will hash every monitored file on disk right now using SHA-256 and store the results as your integrity baseline. Any future deviation will trigger an alert.
+    </div>
+    <div class="modal-paths" id="modal-paths"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeBaselineModal()">Cancel</button>
+      <button class="btn btn-scan" onclick="confirmBaseline()">⊕ Confirm &amp; Hash</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Error Toast ────────────────────────────────────────────────────────── -->
+<div class="toast" id="err-toast"></div>
+
+<script src="app.js?v=20260512-soc"></script>
+</body>
+</html>

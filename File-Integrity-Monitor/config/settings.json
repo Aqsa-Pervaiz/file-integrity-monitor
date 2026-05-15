@@ -1,0 +1,5 @@
+{
+  "algorithm": "SHA-256",
+  "scan_interval": "5 minutes",
+  "alert_level": "high"
+}

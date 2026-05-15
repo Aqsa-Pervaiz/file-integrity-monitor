@@ -1,0 +1,11 @@
+{
+  "name": "file-integrity-monitor",
+  "version": "1.0.0",
+  "description": "Cybersecurity File Integrity Monitoring Dashboard",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server"
+  },
+  "author": "Aqsa Sheikh",
+  "license": "MIT"
+}

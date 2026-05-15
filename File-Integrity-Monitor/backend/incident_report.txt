@@ -1,0 +1,46 @@
+FILE INTEGRITY MONITOR - INCIDENT REPORT
+=======================================================
+Generated At: 2026-05-13 14:02:57 UTC
+Platform: Windows
+Total Monitored Files: 20
+Total Incidents Found: 4
+
+Incident #1
+-------------------------------------------------------
+File Path: C:\Windows\System32\config\SAM
+Status: MISSING
+Risk Level: CRITICAL
+Baseline Hash: MISSING
+Current Hash: MISSING
+Detected At: 2026-05-13 14:02:57 UTC
+Recommended Action: Review file, verify source, and restore trusted version.
+
+Incident #2
+-------------------------------------------------------
+File Path: C:\Windows\System32\config\SECURITY
+Status: MISSING
+Risk Level: CRITICAL
+Baseline Hash: MISSING
+Current Hash: MISSING
+Detected At: 2026-05-13 14:02:57 UTC
+Recommended Action: Review file, verify source, and restore trusted version.
+
+Incident #3
+-------------------------------------------------------
+File Path: C:\Windows\System32\config\SYSTEM
+Status: MISSING
+Risk Level: CRITICAL
+Baseline Hash: MISSING
+Current Hash: MISSING
+Detected At: 2026-05-13 14:02:57 UTC
+Recommended Action: Review file, verify source, and restore trusted version.
+
+Incident #4
+-------------------------------------------------------
+File Path: C:\Windows\System32\config\SOFTWARE
+Status: MISSING
+Risk Level: CRITICAL
+Baseline Hash: MISSING
+Current Hash: MISSING
+Detected At: 2026-05-13 14:02:57 UTC
+Recommended Action: Review file, verify source, and restore trusted version.
