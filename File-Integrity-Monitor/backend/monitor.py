@@ -13,6 +13,7 @@ import sys
 import stat
 import platform
 from datetime import datetime, timezone
+from flask import send_file
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 try:
@@ -378,12 +379,12 @@ def api_incident_report():
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report_text)
 
-    return jsonify({
-        'ok': True,
-        'message': 'Incident report generated',
-        'report_path': report_path,
-        'incidents': incidents
-    })
+    return send_file(
+        report_path,
+        as_attachment=True,
+        download_name='incident_report.txt',
+        mimetype='text/plain'
+    )
 
 
 @app.route('/api/baseline', methods=['GET', 'POST'])

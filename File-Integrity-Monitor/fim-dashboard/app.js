@@ -526,27 +526,18 @@ async function generateIncidentReport() {
   try {
     terminalLog('REPORT', 'Generating incident report...');
 
-    const response = await fetch(`${API}/api/incident-report`);
+    window.open(`${API}/api/incident-report`, '_blank');
 
-    const data = await response.json();
-
-    if (!data.ok) {
-      throw new Error(data.error || 'Report generation failed');
-    }
-
-    terminalLog('REPORT', 'Incident report generated successfully');
-
-    alert(
-  `Incident Report Generated Successfully!\n\n` +
-  `Total Incidents: ${data.incidents.length}\n\n` +
-  `Report saved at:\n${data.report_path}`
-);
+    terminalLog('REPORT', 'Incident report downloaded successfully');
 
   } catch (err) {
     console.error(err);
     alert(`⚠ Incident report failed: ${err.message}`);
   }
 }
+
+
+
 // ─── Footer Clock ─────────────────────────────────────────────────────────────
 function updateClock() {
   document.getElementById('footer-time').textContent = nowStr() + ' UTC';
