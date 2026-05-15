@@ -44,36 +44,42 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_ATTACK_FILE = os.path.join(PROJECT_DIR, 'quarantine_demo_critical.txt')
 OS_NAME = platform.system()   # 'Windows', 'Linux', 'Darwin'
 
-
-MONITORED_FILES = [
-    # Safe demo file: intentionally critical so quarantine can be simulated without touching real OS files
+MONITORED_FILES_WINDOWS = [
     TEST_ATTACK_FILE,
 
-    # Windows networking / command execution / shell files
     r'C:\Windows\System32\drivers\etc\hosts',
     r'C:\Windows\System32\drivers\etc\networks',
     r'C:\Windows\System32\drivers\etc\protocol',
     r'C:\Windows\System32\drivers\etc\services',
     r'C:\Windows\System32\cmd.exe',
     r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe',
-    r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell_ise.exe',
     r'C:\Windows\explorer.exe',
-
-    # Windows admin / system utilities
-    r'C:\Windows\System32\notepad.exe',
-    r'C:\Windows\System32\taskmgr.exe',
-    r'C:\Windows\regedit.exe',
-    r'C:\Windows\System32\services.exe',
-    r'C:\Windows\System32\svchost.exe',
-    r'C:\Windows\System32\winlogon.exe',
-    r'C:\Windows\System32\lsass.exe',
-
-    # Registry hive files: may show permission denied, which is realistic for critical files
-    r'C:\Windows\System32\config\SAM',
-    r'C:\Windows\System32\config\SECURITY',
-    r'C:\Windows\System32\config\SYSTEM',
-    r'C:\Windows\System32\config\SOFTWARE',
 ]
+
+MONITORED_FILES_LINUX = [
+    TEST_ATTACK_FILE,
+
+    '/etc/passwd',
+    '/etc/shadow',
+    '/etc/hosts',
+    '/etc/sudoers',
+]
+
+MONITORED_FILES_MACOS = [
+    TEST_ATTACK_FILE,
+
+    '/etc/passwd',
+    '/etc/hosts',
+]
+
+if OS_NAME == 'Windows':
+    MONITORED_FILES = MONITORED_FILES_WINDOWS
+elif OS_NAME == 'Linux':
+    MONITORED_FILES = MONITORED_FILES_LINUX
+elif OS_NAME == 'Darwin':
+    MONITORED_FILES = MONITORED_FILES_MACOS
+else:
+    MONITORED_FILES = [TEST_ATTACK_FILE]
 
 
 
