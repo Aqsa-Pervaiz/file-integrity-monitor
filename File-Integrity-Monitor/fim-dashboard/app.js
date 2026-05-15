@@ -537,10 +537,10 @@ async function generateIncidentReport() {
     terminalLog('REPORT', 'Incident report generated successfully');
 
     alert(
-      `Incident Report Generated\n\n` +
-      `Incidents Found: ${data.incidents.length}\n` +
-      `Saved To:\n${data.report_path}`
-    );
+  `Incident Report Generated Successfully!\n\n` +
+  `Total Incidents: ${data.incidents.length}\n\n` +
+  `Report saved at:\n${data.report_path}`
+);
 
   } catch (err) {
     console.error(err);
