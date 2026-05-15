@@ -524,22 +524,29 @@ async function simulateAttack() {
 
 async function generateIncidentReport() {
   try {
-    const res = await fetch(`${API}/api/incident-report`);
+    terminalLog('REPORT', 'Generating incident report...');
 
-    const data = await res.json();
+    const response = await fetch(`${API}/incident-report`);
 
-    if (!res.ok || !data.ok) {
-      showToast(data.error || 'Incident report generation failed');
-      return;
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || 'Report generation failed');
     }
 
-    showToast('Incident report generated: ' + data.report_path);
+    terminalLog('REPORT', 'Incident report generated successfully');
 
-  } catch (e) {
-    showToast('Incident report failed: ' + e.message);
+    alert(
+      `Incident Report Generated\n\n` +
+      `Incidents Found: ${data.incidents.length}\n` +
+      `Saved To:\n${data.report_path}`
+    );
+
+  } catch (err) {
+    console.error(err);
+    alert(`⚠ Incident report failed: ${err.message}`);
   }
 }
-
 // ─── Footer Clock ─────────────────────────────────────────────────────────────
 function updateClock() {
   document.getElementById('footer-time').textContent = nowStr() + ' UTC';
