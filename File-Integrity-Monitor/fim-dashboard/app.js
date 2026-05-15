@@ -3,7 +3,7 @@
  * All UI logic: state, API calls, table rendering, scan (SSE), baseline modal.
  */
 
-const API = 'http://127.0.0.1:5000';
+const API = 'https://file-integrity-monitor-8jt5.onrender.com';
 const DEMO_USER = 'admin';
 const DEMO_PASS = 'admin123';
 let quarantineActive = false;
