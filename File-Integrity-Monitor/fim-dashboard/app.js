@@ -526,7 +526,7 @@ async function generateIncidentReport() {
   try {
     terminalLog('REPORT', 'Generating incident report...');
 
-    const response = await fetch(`${API}/incident-report`);
+    const response = await fetch(`${API}/api/incident-report`);
 
     const data = await response.json();
 
